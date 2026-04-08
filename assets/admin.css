@@ -1,0 +1,63 @@
+.wcmr-layout {
+	display: grid;
+	gap: 24px;
+	grid-template-columns: minmax(360px, 1fr) minmax(360px, 1fr);
+	margin-top: 20px;
+}
+
+.wcmr-panel {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 6px;
+	padding: 20px;
+}
+
+.wcmr-taxonomy-grid {
+	display: grid;
+	gap: 16px;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.wcmr-taxonomy-card {
+	border: 1px solid #dcdcde;
+	border-radius: 4px;
+	padding: 12px;
+}
+
+.wcmr-taxonomy-card label {
+	display: block;
+	margin-bottom: 8px;
+}
+
+.wcmr-full-width {
+	grid-column: 1 / -1;
+}
+
+.wcmr-status {
+	border-radius: 999px;
+	display: inline-block;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 4px 10px;
+}
+
+.wcmr-status.is-enabled {
+	background: #e7f6ed;
+	color: #0a6b2c;
+}
+
+.wcmr-status.is-disabled {
+	background: #f6e8e7;
+	color: #8a2424;
+}
+
+.wcmr-product-search,
+.wcmr-term-select {
+	width: 100%;
+}
+
+@media (max-width: 1200px) {
+	.wcmr-layout {
+		grid-template-columns: 1fr;
+	}
+}
