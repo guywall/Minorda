@@ -4,7 +4,7 @@ Tags: woocommerce, minimum order, minimum quantity, product rules, cart rules
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,8 @@ Storefront enforcement happens during add to cart. When multiple rules match, Mi
 * Product search with AJAX lookup in admin
 * Taxonomy-based targeting for categories and custom product taxonomies
 * Enable, disable, edit, and delete actions for rules
+* Product-page minimum quantity explainer near the add to basket area
+* Product-page default quantity prefilled from the relevant minimum quantity rule
 * Add-to-cart validation with customer-facing error notices
 * Matched subtotal calculation excludes tax, shipping, and fees
 
@@ -60,6 +62,13 @@ No. Only the subtotal of products matched by the selected rule is used.
 Yes. Minorda supports any registered taxonomy attached to WooCommerce products and shown in the admin UI.
 
 == Changelog ==
+
+= 1.0.2 =
+
+* Added a front-end minimum quantity explainer near the add to basket form.
+* Prefills the default product quantity with the relevant minimum quantity.
+* Keeps lower quantities editable while still blocking non-compliant add-to-cart attempts.
+* Updated plugin author to Webrankers.
 
 = 1.0.1 =
 

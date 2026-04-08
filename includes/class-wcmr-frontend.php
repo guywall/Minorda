@@ -15,6 +15,24 @@ class WCMR_Frontend {
 	public function __construct( WCMR_Rule_Repository $repository ) {
 		$this->repository = $repository;
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 5 );
+		add_filter( 'woocommerce_quantity_input_args', array( $this, 'set_default_quantity_input' ), 10, 2 );
+		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_rule_explainer' ), 15 );
+		add_filter( 'woocommerce_available_variation', array( $this, 'add_variation_rule_data' ), 10, 3 );
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+	}
+
+	public function enqueue_assets() {
+		if ( ! function_exists( 'is_product' ) || ! is_product() ) {
+			return;
+		}
+
+		wp_enqueue_script(
+			'wcmr-frontend',
+			WCMR_PLUGIN_URL . 'assets/frontend.js',
+			array( 'jquery' ),
+			WCMR_VERSION,
+			true
+		);
 	}
 
 	public function validate_add_to_cart( $passed, $product_id, $quantity, $variation_id = 0, $variations = array() ) {
@@ -25,13 +43,7 @@ class WCMR_Frontend {
 		}
 
 		$target_product_id = $variation_id ? (int) $variation_id : (int) $product_id;
-		$matching_rules    = $this->get_matching_rules_for_product( $target_product_id );
-
-		if ( empty( $matching_rules ) ) {
-			return $passed;
-		}
-
-		$rule = WCMR_Rule_Engine::select_strictest_rule( $matching_rules );
+		$rule              = $this->get_strictest_rule_for_product( $target_product_id );
 
 		if ( ! $rule ) {
 			return $passed;
@@ -47,6 +59,72 @@ class WCMR_Frontend {
 		wc_add_notice( $this->build_failure_message( $rule ), 'error' );
 
 		return false;
+	}
+
+	public function set_default_quantity_input( $args, $product ) {
+		if ( ! function_exists( 'is_product' ) || ! is_product() || ! $product instanceof WC_Product ) {
+			return $args;
+		}
+
+		$rule = $this->get_strictest_rule_for_product( $product->get_id() );
+
+		if ( ! $rule || null === $rule['min_quantity'] ) {
+			return $args;
+		}
+
+		$args['input_value'] = max( 1, (int) $rule['min_quantity'] );
+
+		return $args;
+	}
+
+	public function render_rule_explainer() {
+		global $product;
+
+		if ( ! $product instanceof WC_Product ) {
+			return;
+		}
+
+		$rule         = $this->get_strictest_rule_for_product( $product->get_id() );
+		$minimum      = $rule && null !== $rule['min_quantity'] ? (int) $rule['min_quantity'] : 0;
+		$default_text = $minimum > 0 ? $this->get_quantity_explainer_text( $minimum ) : '';
+		$style        = '' === $default_text ? ' style="display:none;"' : '';
+
+		?>
+		<p
+			class="wcmr-rule-explainer"
+			data-default-text="<?php echo esc_attr( $default_text ); ?>"
+			data-default-min-quantity="<?php echo esc_attr( $minimum ); ?>"<?php echo $style; ?>
+		>
+			<?php echo esc_html( $default_text ); ?>
+		</p>
+		<?php
+	}
+
+	public function add_variation_rule_data( $data, $product, $variation ) {
+		unset( $product );
+
+		if ( ! $variation instanceof WC_Product_Variation ) {
+			return $data;
+		}
+
+		$rule = $this->get_strictest_rule_for_product( $variation->get_id() );
+
+		$data['minorda_min_quantity']       = $rule && null !== $rule['min_quantity'] ? (int) $rule['min_quantity'] : 0;
+		$data['minorda_quantity_explainer'] = $rule && null !== $rule['min_quantity']
+			? $this->get_quantity_explainer_text( (int) $rule['min_quantity'] )
+			: '';
+
+		return $data;
+	}
+
+	public function get_strictest_rule_for_product( $product_id ) {
+		$matching_rules = $this->get_matching_rules_for_product( $product_id );
+
+		if ( empty( $matching_rules ) ) {
+			return null;
+		}
+
+		return WCMR_Rule_Engine::select_strictest_rule( $matching_rules );
 	}
 
 	protected function get_matching_rules_for_product( $product_id ) {
@@ -185,6 +263,13 @@ class WCMR_Frontend {
 		return sprintf(
 			__( 'You cannot add this item yet because the matched products require %s.', 'minorda' ),
 			$requirements_text
+		);
+	}
+
+	protected function get_quantity_explainer_text( $minimum_quantity ) {
+		return sprintf(
+			__( 'Minimum quantity: %d', 'minorda' ),
+			(int) $minimum_quantity
 		);
 	}
 }
