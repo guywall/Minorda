@@ -4,7 +4,7 @@ Tags: woocommerce, minimum order, minimum quantity, product rules, cart rules
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -42,6 +42,7 @@ Storefront enforcement happens during add to cart. When multiple rules match, Mi
 * Product-page default quantity prefilled from the relevant minimum quantity rule
 * Add-to-cart validation with customer-facing error notices
 * Matched subtotal calculation excludes tax, shipping, and fees
+* Optional per-product quantity scope when each listed product needs its own quantity limit
 
 == Installation ==
 
@@ -65,6 +66,11 @@ No. Only the subtotal of products matched by the selected rule is used.
 Yes. Minorda supports any registered taxonomy attached to WooCommerce products and shown in the admin UI.
 
 == Changelog ==
+
+= 1.0.4 =
+
+* Added a per-product quantity scope so quantity limits can apply to each matched product individually instead of using one combined quantity total.
+* Updated storefront quantity explainers and notices for per-product quantity caps.
 
 = 1.0.3 =
 

@@ -16,6 +16,7 @@ $rules = array(
 		'min_value'    => 150.00,
 		'max_quantity' => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	),
 	array(
 		'id'           => 'quantity-five',
@@ -23,6 +24,7 @@ $rules = array(
 		'min_value'    => null,
 		'max_quantity' => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	),
 	array(
 		'id'           => 'quantity-three',
@@ -30,6 +32,7 @@ $rules = array(
 		'min_value'    => 90.00,
 		'max_quantity' => 10,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	),
 	array(
 		'id'           => 'quantity-max-two',
@@ -37,6 +40,7 @@ $rules = array(
 		'min_value'    => null,
 		'max_quantity' => 2,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	),
 );
 
@@ -59,6 +63,7 @@ $evaluation = WCMR_Rule_Engine::evaluate_rule(
 		'min_value'    => 120.00,
 		'max_quantity' => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	)
 );
 
@@ -78,6 +83,7 @@ $passing = WCMR_Rule_Engine::evaluate_rule(
 		'min_value'    => 120.00,
 		'max_quantity' => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	)
 );
 
@@ -95,6 +101,7 @@ $range_pass = WCMR_Rule_Engine::evaluate_rule(
 		'max_quantity' => 5,
 		'min_value'    => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	)
 );
 
@@ -112,6 +119,7 @@ $range_fail = WCMR_Rule_Engine::evaluate_rule(
 		'max_quantity' => 5,
 		'min_value'    => null,
 		'max_value'    => null,
+		'quantity_scope' => 'combined',
 	)
 );
 
@@ -129,9 +137,58 @@ $value_cap_fail = WCMR_Rule_Engine::evaluate_rule(
 		'max_quantity' => null,
 		'min_value'    => null,
 		'max_value'    => 120.00,
+		'quantity_scope' => 'combined',
 	)
 );
 
 wcmr_assert( false === $value_cap_fail['passes'], 'Expected subtotal above maximum value to fail.' );
+
+$per_product_fail = WCMR_Rule_Engine::evaluate_rule(
+	array(
+		array(
+			'item_key'  => 'product:10',
+			'quantity' => 3,
+			'subtotal' => 60.00,
+		),
+		array(
+			'item_key'  => 'product:20',
+			'quantity' => 1,
+			'subtotal' => 20.00,
+		),
+	),
+	array(
+		'min_quantity'   => null,
+		'max_quantity'   => 2,
+		'min_value'      => null,
+		'max_value'      => null,
+		'quantity_scope' => 'per_product',
+	)
+);
+
+wcmr_assert( false === $per_product_fail['passes'], 'Expected per-product quantity cap to fail when one matched product exceeds the cap.' );
+
+$per_product_pass = WCMR_Rule_Engine::evaluate_rule(
+	array(
+		array(
+			'item_key'  => 'product:10',
+			'quantity' => 2,
+			'subtotal' => 40.00,
+		),
+		array(
+			'item_key'  => 'product:20',
+			'quantity' => 2,
+			'subtotal' => 40.00,
+		),
+	),
+	array(
+		'min_quantity'   => null,
+		'max_quantity'   => 2,
+		'min_value'      => null,
+		'max_value'      => null,
+		'quantity_scope' => 'per_product',
+	)
+);
+
+wcmr_assert( true === $per_product_pass['passes'], 'Expected per-product quantity cap to pass when each matched product stays within the cap.' );
 
 echo "WCMR rule engine tests passed.\n";

@@ -191,6 +191,16 @@ class WCMR_Admin {
 										<p class="description"><?php esc_html_e( 'Optional. Matched subtotal excluding tax, shipping, and fees.', 'minorda' ); ?></p>
 									</td>
 								</tr>
+								<tr>
+									<th scope="row"><label for="wcmr-quantity-scope"><?php esc_html_e( 'Quantity rule scope', 'minorda' ); ?></label></th>
+									<td>
+										<select id="wcmr-quantity-scope" name="quantity_scope">
+											<option value="combined" <?php selected( 'combined', $current_rule['quantity_scope'] ?? 'combined' ); ?>><?php esc_html_e( 'Across all matched products', 'minorda' ); ?></option>
+											<option value="per_product" <?php selected( 'per_product', $current_rule['quantity_scope'] ?? 'combined' ); ?>><?php esc_html_e( 'Apply to each matched product', 'minorda' ); ?></option>
+										</select>
+										<p class="description"><?php esc_html_e( 'Choose the second option when each selected product should have its own quantity limit instead of sharing one combined quantity limit.', 'minorda' ); ?></p>
+									</td>
+								</tr>
 							</tbody>
 						</table>
 
@@ -335,6 +345,7 @@ class WCMR_Admin {
 			'min_value'      => isset( $_POST['min_value'] ) ? wc_clean( wp_unslash( $_POST['min_value'] ) ) : '',
 			'max_quantity'   => isset( $_POST['max_quantity'] ) ? wp_unslash( $_POST['max_quantity'] ) : '',
 			'max_value'      => isset( $_POST['max_value'] ) ? wc_clean( wp_unslash( $_POST['max_value'] ) ) : '',
+			'quantity_scope' => isset( $_POST['quantity_scope'] ) ? sanitize_key( wp_unslash( $_POST['quantity_scope'] ) ) : 'combined',
 		);
 
 		$errors = $this->validate_rule_submission( $raw_rule );
@@ -444,6 +455,7 @@ class WCMR_Admin {
 			'min_value'      => null,
 			'max_quantity'   => null,
 			'max_value'      => null,
+			'quantity_scope' => 'combined',
 		);
 	}
 
@@ -592,6 +604,10 @@ class WCMR_Admin {
 				__( 'Max value %s', 'minorda' ),
 				wp_strip_all_tags( wc_price( $rule['max_value'] ) )
 			);
+		}
+
+		if ( 'per_product' === ( $rule['quantity_scope'] ?? 'combined' ) && ( null !== ( $rule['min_quantity'] ?? null ) || null !== ( $rule['max_quantity'] ?? null ) ) ) {
+			$parts[] = __( 'Each product', 'minorda' );
 		}
 
 		return implode( ' / ', $parts );

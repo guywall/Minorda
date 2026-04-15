@@ -2,6 +2,12 @@
 
 All notable changes to Minorda will be documented in this file.
 
+## 1.0.4 - 2026-04-15
+
+- Added a quantity scope option so quantity limits can apply across all matched products or to each matched product individually.
+- Updated storefront quantity explainers and notices for per-product quantity caps.
+- Expanded rule engine coverage for per-product maximum quantity behaviour.
+
 ## 1.0.3 - 2026-04-15
 
 - Added maximum quantity and maximum value fields to rule configuration and storage.

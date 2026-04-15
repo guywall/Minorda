@@ -52,6 +52,12 @@ class WCMR_Rule_Engine {
 						return $min_compare;
 					}
 
+					$scope_compare = ( 'per_product' === ( $right['quantity_scope'] ?? 'combined' ) ? 1 : 0 ) <=> ( 'per_product' === ( $left['quantity_scope'] ?? 'combined' ) ? 1 : 0 );
+
+					if ( 0 !== $scope_compare ) {
+						return $scope_compare;
+					}
+
 					$left_min_value   = (float) ( $left['min_value'] ?? 0 );
 					$right_min_value  = (float) ( $right['min_value'] ?? 0 );
 					$left_max_value   = null !== ( $left['max_value'] ?? null ) ? (float) $left['max_value'] : INF;
@@ -110,10 +116,19 @@ class WCMR_Rule_Engine {
 	public static function evaluate_rule( array $matched_items, array $rule, $price_decimals = 2 ) {
 		$total_quantity = 0;
 		$total_subtotal = 0.0;
+		$per_product_quantities = array();
 
 		foreach ( $matched_items as $item ) {
 			$total_quantity += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
 			$total_subtotal += isset( $item['subtotal'] ) ? (float) $item['subtotal'] : 0.0;
+
+			$item_key = isset( $item['item_key'] ) ? (string) $item['item_key'] : 'default';
+
+			if ( ! isset( $per_product_quantities[ $item_key ] ) ) {
+				$per_product_quantities[ $item_key ] = 0;
+			}
+
+			$per_product_quantities[ $item_key ] += isset( $item['quantity'] ) ? (int) $item['quantity'] : 0;
 		}
 
 		$total_subtotal = round( $total_subtotal, (int) $price_decimals );
@@ -121,20 +136,39 @@ class WCMR_Rule_Engine {
 		return array(
 			'quantity' => $total_quantity,
 			'subtotal' => $total_subtotal,
-			'passes'   => self::passes_rule( $rule, $total_quantity, $total_subtotal ),
+			'per_product_quantities' => $per_product_quantities,
+			'passes'   => self::passes_rule( $rule, $total_quantity, $total_subtotal, $per_product_quantities ),
 		);
 	}
 
-	public static function passes_rule( array $rule, $quantity, $subtotal ) {
-		$quantity_checks = array();
+	public static function passes_rule( array $rule, $quantity, $subtotal, array $per_product_quantities = array() ) {
 		$value_checks    = array();
+		$quantity_scope  = $rule['quantity_scope'] ?? 'combined';
+		$quantity_values = 'per_product' === $quantity_scope && ! empty( $per_product_quantities )
+			? array_values( $per_product_quantities )
+			: array( (int) $quantity );
+		$quantity_passes = null;
 
 		if ( isset( $rule['min_quantity'] ) && null !== $rule['min_quantity'] ) {
-			$quantity_checks[] = (int) $quantity >= (int) $rule['min_quantity'];
+			$quantity_passes = true;
+			foreach ( $quantity_values as $quantity_value ) {
+				if ( (int) $quantity_value < (int) $rule['min_quantity'] ) {
+					$quantity_passes = false;
+					break;
+				}
+			}
 		}
 
 		if ( isset( $rule['max_quantity'] ) && null !== $rule['max_quantity'] ) {
-			$quantity_checks[] = (int) $quantity <= (int) $rule['max_quantity'];
+			if ( null === $quantity_passes ) {
+				$quantity_passes = true;
+			}
+			foreach ( $quantity_values as $quantity_value ) {
+				if ( (int) $quantity_value > (int) $rule['max_quantity'] ) {
+					$quantity_passes = false;
+					break;
+				}
+			}
 		}
 
 		if ( isset( $rule['min_value'] ) && null !== $rule['min_value'] ) {
@@ -145,7 +179,6 @@ class WCMR_Rule_Engine {
 			$value_checks[] = (float) $subtotal <= (float) $rule['max_value'];
 		}
 
-		$quantity_passes = empty( $quantity_checks ) ? null : ! in_array( false, $quantity_checks, true );
 		$value_passes    = empty( $value_checks ) ? null : ! in_array( false, $value_checks, true );
 
 		if ( null !== $quantity_passes && null !== $value_passes ) {
@@ -160,7 +193,7 @@ class WCMR_Rule_Engine {
 			return $value_passes;
 		}
 
-		if ( empty( $quantity_checks ) && empty( $value_checks ) ) {
+		if ( null === $quantity_passes && empty( $value_checks ) ) {
 			return true;
 		}
 

@@ -190,6 +190,7 @@ class WCMR_Frontend {
 				}
 
 				$matched_items[] = array(
+					'item_key' => $this->get_quantity_item_key( $cart_item_product_id, $rule ),
 					'quantity' => isset( $cart_item['quantity'] ) ? (int) $cart_item['quantity'] : 0,
 					'subtotal' => isset( $cart_item['line_subtotal'] ) ? (float) $cart_item['line_subtotal'] : 0.0,
 				);
@@ -200,6 +201,7 @@ class WCMR_Frontend {
 
 		if ( $product && $this->product_matches_rule( $target_product_id, $rule ) ) {
 			$matched_items[] = array(
+				'item_key' => $this->get_quantity_item_key( $target_product_id, $rule ),
 				'quantity' => (int) $quantity,
 				'subtotal' => (float) wc_get_price_excluding_tax(
 					$product,
@@ -248,18 +250,23 @@ class WCMR_Frontend {
 
 	protected function get_quantity_explainer_html( array $rule ) {
 		$lines = array();
+		$per_product_suffix = 'per_product' === ( $rule['quantity_scope'] ?? 'combined' )
+			? __( ' per product', 'minorda' )
+			: '';
 
 		if ( null !== ( $rule['min_quantity'] ?? null ) ) {
 			$lines[] = sprintf(
-				__( 'Minimum quantity: %d', 'minorda' ),
-				(int) $rule['min_quantity']
+				__( 'Minimum quantity: %1$d%2$s', 'minorda' ),
+				(int) $rule['min_quantity'],
+				$per_product_suffix
 			);
 		}
 
 		if ( null !== ( $rule['max_quantity'] ?? null ) ) {
 			$lines[] = sprintf(
-				__( 'Maximum quantity: %d', 'minorda' ),
-				(int) $rule['max_quantity']
+				__( 'Maximum quantity: %1$d%2$s', 'minorda' ),
+				(int) $rule['max_quantity'],
+				$per_product_suffix
 			);
 		}
 
@@ -293,30 +300,54 @@ class WCMR_Frontend {
 	protected function build_quantity_requirement_text( array $rule ) {
 		$has_min = null !== ( $rule['min_quantity'] ?? null );
 		$has_max = null !== ( $rule['max_quantity'] ?? null );
+		$per_product_suffix = 'per_product' === ( $rule['quantity_scope'] ?? 'combined' )
+			? __( ' for each matched product', 'minorda' )
+			: '';
 
 		if ( $has_min && $has_max ) {
 			return sprintf(
-				__( 'a quantity between %1$d and %2$d', 'minorda' ),
+				__( 'a quantity between %1$d and %2$d%3$s', 'minorda' ),
 				(int) $rule['min_quantity'],
-				(int) $rule['max_quantity']
+				(int) $rule['max_quantity'],
+				$per_product_suffix
 			);
 		}
 
 		if ( $has_min ) {
 			return sprintf(
-				__( 'a minimum quantity of %d', 'minorda' ),
-				(int) $rule['min_quantity']
+				__( 'a minimum quantity of %1$d%2$s', 'minorda' ),
+				(int) $rule['min_quantity'],
+				$per_product_suffix
 			);
 		}
 
 		if ( $has_max ) {
 			return sprintf(
-				__( 'a maximum quantity of %d', 'minorda' ),
-				(int) $rule['max_quantity']
+				__( 'a maximum quantity of %1$d%2$s', 'minorda' ),
+				(int) $rule['max_quantity'],
+				$per_product_suffix
 			);
 		}
 
 		return '';
+	}
+
+	protected function get_quantity_item_key( $product_id, array $rule ) {
+		$candidate_ids = $this->get_candidate_product_ids( $product_id );
+
+		foreach ( (array) ( $rule['product_ids'] ?? array() ) as $target_product_id ) {
+			if ( in_array( (int) $target_product_id, $candidate_ids, true ) ) {
+				return 'product:' . (int) $target_product_id;
+			}
+		}
+
+		$product = wc_get_product( $product_id );
+
+		if ( $product && $product->is_type( 'variation' ) ) {
+			return 'product:' . (int) $product->get_parent_id();
+		}
+
+		return 'product:' . (int) $product_id;
 	}
 
 	protected function build_value_requirement_text( array $rule ) {

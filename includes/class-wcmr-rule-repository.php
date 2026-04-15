@@ -151,6 +151,14 @@ class WCMR_Rule_Repository {
 			}
 		}
 
+		$quantity_scope = 'combined';
+		if ( isset( $rule['quantity_scope'] ) ) {
+			$scope = sanitize_key( (string) $rule['quantity_scope'] );
+			if ( in_array( $scope, array( 'combined', 'per_product' ), true ) ) {
+				$quantity_scope = $scope;
+			}
+		}
+
 		return array(
 			'id'             => sanitize_key( $rule_id ),
 			'name'           => sanitize_text_field( $rule['name'] ?? '' ),
@@ -161,6 +169,7 @@ class WCMR_Rule_Repository {
 			'min_value'      => $min_value,
 			'max_quantity'   => $max_quantity,
 			'max_value'      => $max_value,
+			'quantity_scope' => $quantity_scope,
 		);
 	}
 }
