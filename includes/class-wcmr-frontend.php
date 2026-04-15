@@ -85,17 +85,17 @@ class WCMR_Frontend {
 		}
 
 		$rule         = $this->get_strictest_rule_for_product( $product->get_id() );
-		$minimum      = $rule && null !== $rule['min_quantity'] ? (int) $rule['min_quantity'] : 0;
-		$default_text = $minimum > 0 ? $this->get_quantity_explainer_text( $minimum ) : '';
-		$style        = '' === $default_text ? ' style="display:none;"' : '';
+		$minimum      = $rule && null !== ( $rule['min_quantity'] ?? null ) ? (int) $rule['min_quantity'] : 0;
+		$default_html = $rule ? $this->get_quantity_explainer_html( $rule ) : '';
+		$style        = '' === $default_html ? ' style="display:none;"' : '';
 
 		?>
 		<p
 			class="wcmr-rule-explainer"
-			data-default-text="<?php echo esc_attr( $default_text ); ?>"
+			data-default-html="<?php echo esc_attr( $default_html ); ?>"
 			data-default-min-quantity="<?php echo esc_attr( $minimum ); ?>"<?php echo $style; ?>
 		>
-			<?php echo esc_html( $default_text ); ?>
+			<?php echo wp_kses( $default_html, array( 'br' => array() ) ); ?>
 		</p>
 		<?php
 	}
@@ -109,10 +109,8 @@ class WCMR_Frontend {
 
 		$rule = $this->get_strictest_rule_for_product( $variation->get_id() );
 
-		$data['minorda_min_quantity']       = $rule && null !== $rule['min_quantity'] ? (int) $rule['min_quantity'] : 0;
-		$data['minorda_quantity_explainer'] = $rule && null !== $rule['min_quantity']
-			? $this->get_quantity_explainer_text( (int) $rule['min_quantity'] )
-			: '';
+		$data['minorda_min_quantity']        = $rule && null !== ( $rule['min_quantity'] ?? null ) ? (int) $rule['min_quantity'] : 0;
+		$data['minorda_quantity_explainer']  = $rule ? $this->get_quantity_explainer_html( $rule ) : '';
 
 		return $data;
 	}
@@ -232,25 +230,7 @@ class WCMR_Frontend {
 	}
 
 	protected function build_failure_message( array $rule ) {
-		$requirements = array();
-
-		if ( null !== $rule['min_quantity'] ) {
-			$requirements[] = sprintf(
-				__( 'a minimum quantity of %d', 'minorda' ),
-				(int) $rule['min_quantity']
-			);
-		}
-
-		if ( null !== $rule['min_value'] ) {
-			$requirements[] = sprintf(
-				__( 'a minimum value of %s', 'minorda' ),
-				wp_strip_all_tags( wc_price( $rule['min_value'] ) )
-			);
-		}
-
-		$requirements_text = 1 === count( $requirements )
-			? $requirements[0]
-			: implode( ' ' . __( 'or', 'minorda' ) . ' ', $requirements );
+		$requirements_text = $this->build_requirements_text( $rule );
 
 		if ( ! empty( $rule['name'] ) ) {
 			return sprintf(
@@ -266,10 +246,105 @@ class WCMR_Frontend {
 		);
 	}
 
-	protected function get_quantity_explainer_text( $minimum_quantity ) {
-		return sprintf(
-			__( 'Minimum quantity: %d', 'minorda' ),
-			(int) $minimum_quantity
-		);
+	protected function get_quantity_explainer_html( array $rule ) {
+		$lines = array();
+
+		if ( null !== ( $rule['min_quantity'] ?? null ) ) {
+			$lines[] = sprintf(
+				__( 'Minimum quantity: %d', 'minorda' ),
+				(int) $rule['min_quantity']
+			);
+		}
+
+		if ( null !== ( $rule['max_quantity'] ?? null ) ) {
+			$lines[] = sprintf(
+				__( 'Maximum quantity: %d', 'minorda' ),
+				(int) $rule['max_quantity']
+			);
+		}
+
+		return implode( '<br>', array_map( 'esc_html', $lines ) );
+	}
+
+	protected function build_requirements_text( array $rule ) {
+		$requirements = array();
+		$quantity_requirement = $this->build_quantity_requirement_text( $rule );
+		$value_requirement    = $this->build_value_requirement_text( $rule );
+
+		if ( '' !== $quantity_requirement ) {
+			$requirements[] = $quantity_requirement;
+		}
+
+		if ( '' !== $value_requirement ) {
+			$requirements[] = $value_requirement;
+		}
+
+		if ( empty( $requirements ) ) {
+			return '';
+		}
+
+		if ( 1 === count( $requirements ) ) {
+			return $requirements[0];
+		}
+
+		return implode( ' ' . __( 'or', 'minorda' ) . ' ', $requirements );
+	}
+
+	protected function build_quantity_requirement_text( array $rule ) {
+		$has_min = null !== ( $rule['min_quantity'] ?? null );
+		$has_max = null !== ( $rule['max_quantity'] ?? null );
+
+		if ( $has_min && $has_max ) {
+			return sprintf(
+				__( 'a quantity between %1$d and %2$d', 'minorda' ),
+				(int) $rule['min_quantity'],
+				(int) $rule['max_quantity']
+			);
+		}
+
+		if ( $has_min ) {
+			return sprintf(
+				__( 'a minimum quantity of %d', 'minorda' ),
+				(int) $rule['min_quantity']
+			);
+		}
+
+		if ( $has_max ) {
+			return sprintf(
+				__( 'a maximum quantity of %d', 'minorda' ),
+				(int) $rule['max_quantity']
+			);
+		}
+
+		return '';
+	}
+
+	protected function build_value_requirement_text( array $rule ) {
+		$has_min = null !== ( $rule['min_value'] ?? null );
+		$has_max = null !== ( $rule['max_value'] ?? null );
+
+		if ( $has_min && $has_max ) {
+			return sprintf(
+				__( 'a value between %1$s and %2$s', 'minorda' ),
+				wp_strip_all_tags( wc_price( $rule['min_value'] ) ),
+				wp_strip_all_tags( wc_price( $rule['max_value'] ) )
+			);
+		}
+
+		if ( $has_min ) {
+			return sprintf(
+				__( 'a minimum value of %s', 'minorda' ),
+				wp_strip_all_tags( wc_price( $rule['min_value'] ) )
+			);
+		}
+
+		if ( $has_max ) {
+			return sprintf(
+				__( 'a maximum value of %s', 'minorda' ),
+				wp_strip_all_tags( wc_price( $rule['max_value'] ) )
+			);
+		}
+
+		return '';
 	}
 }

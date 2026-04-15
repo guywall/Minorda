@@ -4,11 +4,11 @@ Tags: woocommerce, minimum order, minimum quantity, product rules, cart rules
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Minorda lets store owners enforce minimum quantity or minimum value rules for specific WooCommerce products, categories, and product taxonomies.
+Minorda lets store owners enforce minimum and maximum quantity or value rules for specific WooCommerce products, categories, and product taxonomies.
 
 == Description ==
 
@@ -24,6 +24,8 @@ Each rule can require:
 
 * A minimum quantity
 * A minimum matched subtotal
+* A maximum quantity
+* A maximum matched subtotal
 * Either threshold to pass when both are set
 
 Storefront enforcement happens during add to cart. When multiple rules match, Minorda applies the strictest matching rule using the current plugin logic.
@@ -36,6 +38,7 @@ Storefront enforcement happens during add to cart. When multiple rules match, Mi
 * Taxonomy-based targeting for categories and custom product taxonomies
 * Enable, disable, edit, and delete actions for rules
 * Product-page minimum quantity explainer near the add to basket area
+* Product-page maximum quantity explainer near the add to basket area
 * Product-page default quantity prefilled from the relevant minimum quantity rule
 * Add-to-cart validation with customer-facing error notices
 * Matched subtotal calculation excludes tax, shipping, and fees
@@ -51,7 +54,7 @@ Storefront enforcement happens during add to cart. When multiple rules match, Mi
 
 = How are overlapping rules handled? =
 
-Minorda selects a single strictest rule for the attempted product. Quantity-based rules take priority over value-only rules, and the highest quantity minimum wins among quantity rules.
+Minorda selects a single strictest rule for the attempted product. Quantity-based rules take priority over value-only rules, and stricter quantity ranges are preferred when maximums are involved.
 
 = Does the minimum value use the whole cart total? =
 
@@ -62,6 +65,12 @@ No. Only the subtotal of products matched by the selected rule is used.
 Yes. Minorda supports any registered taxonomy attached to WooCommerce products and shown in the admin UI.
 
 == Changelog ==
+
+= 1.0.3 =
+
+* Added maximum quantity and maximum value support to rule setup and enforcement.
+* Added front-end maximum quantity explainers alongside minimum quantity notices.
+* Extended rule validation, summaries, and tests for minimum and maximum ranges.
 
 = 1.0.2 =
 

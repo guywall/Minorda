@@ -1,22 +1,22 @@
 ( function( $ ) {
 	'use strict';
 
-	function updateExplainer( $form, text ) {
+	function updateExplainer( $form, html ) {
 		var $explainer = $form.find( '.wcmr-rule-explainer' );
 
 		if ( ! $explainer.length ) {
 			return;
 		}
 
-		if ( text ) {
-			$explainer.text( text ).show();
+		if ( html ) {
+			$explainer.html( html ).show();
 			return;
 		}
 
-		var defaultText = $explainer.data( 'default-text' );
+		var defaultHtml = $explainer.data( 'default-html' );
 
-		if ( defaultText ) {
-			$explainer.text( defaultText ).show();
+		if ( defaultHtml ) {
+			$explainer.html( defaultHtml ).show();
 			return;
 		}
 
@@ -47,10 +47,10 @@
 		$variationForms.on( 'found_variation', function( event, variation ) {
 			var $form = $( event.currentTarget );
 			var minimumQuantity = variation && variation.minorda_min_quantity ? parseInt( variation.minorda_min_quantity, 10 ) : 0;
-			var explainerText = variation && variation.minorda_quantity_explainer ? variation.minorda_quantity_explainer : '';
+			var explainerHtml = variation && variation.minorda_quantity_explainer ? variation.minorda_quantity_explainer : '';
 
 			updateQuantity( $form, minimumQuantity );
-			updateExplainer( $form, explainerText );
+			updateExplainer( $form, explainerHtml );
 		} );
 
 		$variationForms.on( 'reset_data hide_variation', function( event ) {

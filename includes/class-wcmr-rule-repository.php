@@ -135,6 +135,22 @@ class WCMR_Rule_Repository {
 			}
 		}
 
+		$max_quantity = null;
+		if ( isset( $rule['max_quantity'] ) && '' !== $rule['max_quantity'] && null !== $rule['max_quantity'] ) {
+			$max_quantity = absint( $rule['max_quantity'] );
+			if ( $max_quantity <= 0 ) {
+				$max_quantity = null;
+			}
+		}
+
+		$max_value = null;
+		if ( isset( $rule['max_value'] ) && '' !== $rule['max_value'] && null !== $rule['max_value'] ) {
+			$max_value = (float) wc_format_decimal( wp_unslash( (string) $rule['max_value'] ) );
+			if ( $max_value <= 0 ) {
+				$max_value = null;
+			}
+		}
+
 		return array(
 			'id'             => sanitize_key( $rule_id ),
 			'name'           => sanitize_text_field( $rule['name'] ?? '' ),
@@ -143,6 +159,8 @@ class WCMR_Rule_Repository {
 			'taxonomy_terms' => $taxonomy_terms,
 			'min_quantity'   => $min_quantity,
 			'min_value'      => $min_value,
+			'max_quantity'   => $max_quantity,
+			'max_value'      => $max_value,
 		);
 	}
 }

@@ -177,6 +177,20 @@ class WCMR_Admin {
 										<p class="description"><?php esc_html_e( 'Optional. Matched subtotal excluding tax, shipping, and fees.', 'minorda' ); ?></p>
 									</td>
 								</tr>
+								<tr>
+									<th scope="row"><label for="wcmr-max-quantity"><?php esc_html_e( 'Maximum quantity', 'minorda' ); ?></label></th>
+									<td>
+										<input id="wcmr-max-quantity" name="max_quantity" type="number" class="small-text" min="1" step="1" value="<?php echo esc_attr( $current_rule['max_quantity'] ?? '' ); ?>">
+										<p class="description"><?php esc_html_e( 'Optional. Positive whole number.', 'minorda' ); ?></p>
+									</td>
+								</tr>
+								<tr>
+									<th scope="row"><label for="wcmr-max-value"><?php esc_html_e( 'Maximum value', 'minorda' ); ?></label></th>
+									<td>
+										<input id="wcmr-max-value" name="max_value" type="number" class="small-text" min="0" step="0.01" value="<?php echo esc_attr( null !== $current_rule['max_value'] ? wc_format_localized_price( $current_rule['max_value'] ) : '' ); ?>">
+										<p class="description"><?php esc_html_e( 'Optional. Matched subtotal excluding tax, shipping, and fees.', 'minorda' ); ?></p>
+									</td>
+								</tr>
 							</tbody>
 						</table>
 
@@ -197,7 +211,7 @@ class WCMR_Admin {
 								<tr>
 									<th><?php esc_html_e( 'Rule', 'minorda' ); ?></th>
 									<th><?php esc_html_e( 'Targets', 'minorda' ); ?></th>
-									<th><?php esc_html_e( 'Minimums', 'minorda' ); ?></th>
+									<th><?php esc_html_e( 'Limits', 'minorda' ); ?></th>
 									<th><?php esc_html_e( 'Status', 'minorda' ); ?></th>
 									<th><?php esc_html_e( 'Actions', 'minorda' ); ?></th>
 								</tr>
@@ -207,7 +221,7 @@ class WCMR_Admin {
 									<tr>
 										<td><strong><?php echo esc_html( $rule['name'] ); ?></strong></td>
 										<td><?php echo wp_kses_post( $this->render_rule_targets_summary( $rule ) ); ?></td>
-										<td><?php echo esc_html( $this->render_rule_minimums_summary( $rule ) ); ?></td>
+										<td><?php echo esc_html( $this->render_rule_limits_summary( $rule ) ); ?></td>
 										<td>
 											<span class="wcmr-status <?php echo ! empty( $rule['enabled'] ) ? 'is-enabled' : 'is-disabled'; ?>">
 												<?php echo ! empty( $rule['enabled'] ) ? esc_html__( 'Enabled', 'minorda' ) : esc_html__( 'Disabled', 'minorda' ); ?>
@@ -319,6 +333,8 @@ class WCMR_Admin {
 			'taxonomy_terms' => isset( $_POST['taxonomy_terms'] ) ? (array) wp_unslash( $_POST['taxonomy_terms'] ) : array(),
 			'min_quantity'   => isset( $_POST['min_quantity'] ) ? wp_unslash( $_POST['min_quantity'] ) : '',
 			'min_value'      => isset( $_POST['min_value'] ) ? wc_clean( wp_unslash( $_POST['min_value'] ) ) : '',
+			'max_quantity'   => isset( $_POST['max_quantity'] ) ? wp_unslash( $_POST['max_quantity'] ) : '',
+			'max_value'      => isset( $_POST['max_value'] ) ? wc_clean( wp_unslash( $_POST['max_value'] ) ) : '',
 		);
 
 		$errors = $this->validate_rule_submission( $raw_rule );
@@ -361,9 +377,11 @@ class WCMR_Admin {
 
 		$min_quantity = trim( (string) ( $raw_rule['min_quantity'] ?? '' ) );
 		$min_value    = trim( (string) ( $raw_rule['min_value'] ?? '' ) );
+		$max_quantity = trim( (string) ( $raw_rule['max_quantity'] ?? '' ) );
+		$max_value    = trim( (string) ( $raw_rule['max_value'] ?? '' ) );
 
-		if ( '' === $min_quantity && '' === $min_value ) {
-			$errors[] = __( 'Set at least one minimum threshold.', 'minorda' );
+		if ( '' === $min_quantity && '' === $min_value && '' === $max_quantity && '' === $max_value ) {
+			$errors[] = __( 'Set at least one minimum or maximum threshold.', 'minorda' );
 		}
 
 		if ( '' !== $min_quantity && ( ! ctype_digit( $min_quantity ) || (int) $min_quantity <= 0 ) ) {
@@ -374,6 +392,30 @@ class WCMR_Admin {
 			$normalized_value = wc_format_decimal( $min_value );
 			if ( '' === $normalized_value || (float) $normalized_value <= 0 ) {
 				$errors[] = __( 'Minimum value must be a positive amount.', 'minorda' );
+			}
+		}
+
+		if ( '' !== $max_quantity && ( ! ctype_digit( $max_quantity ) || (int) $max_quantity <= 0 ) ) {
+			$errors[] = __( 'Maximum quantity must be a positive whole number.', 'minorda' );
+		}
+
+		if ( '' !== $max_value ) {
+			$normalized_value = wc_format_decimal( $max_value );
+			if ( '' === $normalized_value || (float) $normalized_value <= 0 ) {
+				$errors[] = __( 'Maximum value must be a positive amount.', 'minorda' );
+			}
+		}
+
+		if ( '' !== $min_quantity && '' !== $max_quantity && (int) $min_quantity > (int) $max_quantity ) {
+			$errors[] = __( 'Maximum quantity must be greater than or equal to minimum quantity.', 'minorda' );
+		}
+
+		if ( '' !== $min_value && '' !== $max_value ) {
+			$normalized_min_value = (float) wc_format_decimal( $min_value );
+			$normalized_max_value = (float) wc_format_decimal( $max_value );
+
+			if ( $normalized_min_value > $normalized_max_value ) {
+				$errors[] = __( 'Maximum value must be greater than or equal to minimum value.', 'minorda' );
 			}
 		}
 
@@ -400,6 +442,8 @@ class WCMR_Admin {
 			'taxonomy_terms' => array(),
 			'min_quantity'   => null,
 			'min_value'      => null,
+			'max_quantity'   => null,
+			'max_value'      => null,
 		);
 	}
 
@@ -519,20 +563,34 @@ class WCMR_Admin {
 		return implode( '<br>', array_map( 'esc_html', $parts ) );
 	}
 
-	protected function render_rule_minimums_summary( array $rule ) {
+	protected function render_rule_limits_summary( array $rule ) {
 		$parts = array();
 
 		if ( null !== $rule['min_quantity'] ) {
 			$parts[] = sprintf(
-				__( 'Qty %d', 'minorda' ),
+				__( 'Min qty %d', 'minorda' ),
 				(int) $rule['min_quantity']
 			);
 		}
 
 		if ( null !== $rule['min_value'] ) {
 			$parts[] = sprintf(
-				__( 'Value %s', 'minorda' ),
+				__( 'Min value %s', 'minorda' ),
 				wp_strip_all_tags( wc_price( $rule['min_value'] ) )
+			);
+		}
+
+		if ( null !== ( $rule['max_quantity'] ?? null ) ) {
+			$parts[] = sprintf(
+				__( 'Max qty %d', 'minorda' ),
+				(int) $rule['max_quantity']
+			);
+		}
+
+		if ( null !== ( $rule['max_value'] ?? null ) ) {
+			$parts[] = sprintf(
+				__( 'Max value %s', 'minorda' ),
+				wp_strip_all_tags( wc_price( $rule['max_value'] ) )
 			);
 		}
 
