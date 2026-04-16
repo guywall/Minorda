@@ -16,7 +16,7 @@ class WCMR_Frontend {
 		$this->repository = $repository;
 		add_filter( 'woocommerce_add_to_cart_validation', array( $this, 'validate_add_to_cart' ), 10, 5 );
 		add_filter( 'woocommerce_quantity_input_args', array( $this, 'set_default_quantity_input' ), 10, 2 );
-		add_action( 'woocommerce_before_add_to_cart_button', array( $this, 'render_rule_explainer' ), 15 );
+		add_action( 'woocommerce_after_add_to_cart_button', array( $this, 'render_rule_explainer' ), 15 );
 		add_filter( 'woocommerce_available_variation', array( $this, 'add_variation_rule_data' ), 10, 3 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
@@ -32,6 +32,13 @@ class WCMR_Frontend {
 			array( 'jquery' ),
 			WCMR_VERSION,
 			true
+		);
+
+		wp_enqueue_style(
+			'wcmr-frontend',
+			WCMR_PLUGIN_URL . 'assets/frontend.css',
+			array(),
+			WCMR_VERSION
 		);
 	}
 

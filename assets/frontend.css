@@ -1,0 +1,16 @@
+.single-product form.cart .wcmr-rule-explainer,
+.woocommerce div.product form.cart .wcmr-rule-explainer {
+	box-sizing: border-box;
+	clear: both;
+	display: block;
+	flex: 0 0 100%;
+	margin: 12px 0 0;
+	order: 999;
+	width: 100%;
+}
+
+.single-product form.cart .wcmr-rule-explainer {
+	color: inherit;
+	font-size: 0.95em;
+	line-height: 1.4;
+}

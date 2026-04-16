@@ -2,6 +2,11 @@
 
 All notable changes to Minorda will be documented in this file.
 
+## 1.0.5 - 2026-04-16
+
+- Moved the product-page rule explainer from before the add to basket button to after it.
+- Added frontend CSS so the explainer occupies its own row below the quantity and basket controls, including flex-based product form layouts.
+
 ## 1.0.4 - 2026-04-15
 
 - Added a quantity scope option so quantity limits can apply across all matched products or to each matched product individually.
