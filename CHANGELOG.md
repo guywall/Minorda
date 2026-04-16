@@ -2,6 +2,10 @@
 
 All notable changes to Minorda will be documented in this file.
 
+## 1.0.6 - 2026-04-16
+
+- Updated frontend CSS for Elementor product forms so the rule explainer wraps below the quantity and add to basket controls without widening or pushing the button row.
+
 ## 1.0.5 - 2026-04-16
 
 - Moved the product-page rule explainer from before the add to basket button to after it.

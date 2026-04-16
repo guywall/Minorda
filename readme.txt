@@ -4,7 +4,7 @@ Tags: woocommerce, minimum order, minimum quantity, product rules, cart rules
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
-Stable tag: 1.0.5
+Stable tag: 1.0.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -66,6 +66,10 @@ No. Only the subtotal of products matched by the selected rule is used.
 Yes. Minorda supports any registered taxonomy attached to WooCommerce products and shown in the admin UI.
 
 == Changelog ==
+
+= 1.0.6 =
+
+* Tightened Elementor/WooCommerce product form styling so the rule badge no longer pushes the add to basket controls sideways.
 
 = 1.0.5 =
 
